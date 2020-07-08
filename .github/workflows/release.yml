@@ -1,0 +1,42 @@
+name: Release
+on:
+  push:
+    branches: [release]
+
+jobs:
+  release:
+    name: Release on GitHub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14
+
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Test
+        run: go test ./...
+
+      - name: Generate Version
+        id: semver
+        uses: paulhatch/semantic-version@v2.1.1
+        with:
+          branch: "release"
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "v${major}.${minor}.${patch}"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.semver.outputs.version }}
+          release_name: ${{ steps.semver.outputs.version }}
+          body: Version ${{ steps.semver.outputs.version }}
+          draft: false
+          prerelease: false
