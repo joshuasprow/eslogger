@@ -1,9 +1,9 @@
 package eslogger
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
@@ -57,12 +57,10 @@ func (w *writer) Write(reqBody []byte) (n int, err error) {
 		return n, errors.New("elasticsearch.Client is nil")
 	}
 
-	buf := bytes.NewBuffer(reqBody)
-
 	year, month, day := time.Now().Date()
 	idx := fmt.Sprintf("%s-%d-%d-%d", index, year, int(month), day)
 
-	res, err := w.es.Index(idx, buf)
+	res, err := w.es.Index(idx, strings.NewReader(string(reqBody)))
 	if err != nil {
 		return n, errors.Wrap(err, "failed to index log entry")
 	}
